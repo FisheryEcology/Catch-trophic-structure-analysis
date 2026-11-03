@@ -1,12 +1,14 @@
-library(openxlsx)
 library(EcoTroph)
-ETconstruct <- function(dtuse, TLdata){
-  tldata <- read.xlsx(TLdata)
+#dtuse: A framework, with sample classification attributes in the first "metalows" column(s) and functional group–specific catch data in the remaining columns.
+#metalows: The number of sample classification attributes.
+#TLdata: A framework, with functional group name as the first column (named Group) and their trophic levels as the second column.
+#dtind: A framework, with trophic levels as the first column (named TL) and their catch (named Catch)as the second column, , which matched the output data structure from function "ETconstruct". 
+ETconstruct <- function(dtuse, TLdata, metalows = 2){
   midres <- data.frame(1,2,3)
   colnames(midres) <- c('group_name','TL','biomass')
-  for (k in 3:(dim(dtuse)[2]-2)){
+  for (k in (metalows + 1):(dim(dtuse)[2])){
     tempmidres = data.frame(colnames(dtuse[k]),
-                            tldata[which(tldata$行标签 == colnames(dtuse[k])),][,3],
+                            tldata[which(tldata$Group == colnames(dtuse[k])),][,3],
                             sum(dtuse[,k]))
     colnames(tempmidres) <- colnames(midres)
     midres <- rbind(midres,tempmidres)
@@ -17,7 +19,6 @@ ETconstruct <- function(dtuse, TLdata){
   ETuse$catch.2 = 0
   ETuse$accessibility = 0
   ETuse$OI = 0
-  #write.csv(ETuse,'tempETuse.csv')
   dty = ETuse
   dtz <- create.smooth(dty)
   dtzs = Transpose(dtz, dty, 'biomass')
@@ -26,7 +27,7 @@ ETconstruct <- function(dtuse, TLdata){
   EToutput = data.frame(1,2)
   colnames(EToutput) = c('TL','Catch')
   for (m in 1:dim(dd)[1]){
-    subEToutput = data.frame(dd[m,1],sum(dd[m,2:dim(dd)[2]])/22648*1000)
+    subEToutput = data.frame(dd[m,1],sum(dd[m,2:dim(dd)[2]]))
     colnames(subEToutput) = colnames(EToutput)
     EToutput = rbind(EToutput,subEToutput)
   }
@@ -35,9 +36,9 @@ ETconstruct <- function(dtuse, TLdata){
 Indcatorcalculate <- function(dtind){
   dtind$TL = as.numeric(dtind$TL)
   dtind$Catch = as.numeric(dtind$Catch)
-  dt1 = dtind[which(dtind$TL>2.9 & dtind$TL<5.1),]
-  dt2 = dtind[which(dtind$TL>1.9 & dtind$TL<5.1),]
-  dt3 = dtind[which(dtind$TL>3.25 & dtind$TL<5.1),]
+  dt1 = dtind[which(dtind$TL>=3.0 & dtind$TL<=5.0),]
+  dt2 = dtind[which(dtind$TL>=2.0 & dtind$TL<=5.0),]
+  dt3 = dtind[which(dtind$TL>=3.25 & dtind$TL<=5.0),]
   ##
   linem = as.numeric(as.list(lm(formula = log10(as.numeric(dt1[,2]))~as.numeric(dt1[,1]))[["coefficients"]])[2])
   ##
